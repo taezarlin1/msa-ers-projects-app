@@ -8,7 +8,7 @@ export const appCategories  = [
             {
                 id: "ersTechnology",
                 url: '/ers-technology',
-                image: '/images/home/erstechnology.gif'
+                image: '/images/home/hoffice.gif'
             }
            
         ]
