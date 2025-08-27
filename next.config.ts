@@ -1,7 +1,17 @@
-import type { NextConfig } from "next";
+import createNextIntlPlugin from 'next-intl/plugin';
+ 
+const BASE_URL = process.env.BASE_URL;
 
-const nextConfig: NextConfig = {
-  /* config options here */
+// console.log("Base url:", BASE_URL)
+
+const nextConfig = {
+  // This allows access from other devices on your network during development
+  allowedDevOrigins: [
+    `${BASE_URL}:3000`, // Replace with PC's local IP
+    'http://100.88.188.94:3000', // If mobile resolves to this
+    '*.local'                    // Optionally for local hostnames
+  ]
 };
-
-export default nextConfig;
+ 
+const withNextIntl = createNextIntlPlugin();
+export default withNextIntl(nextConfig);

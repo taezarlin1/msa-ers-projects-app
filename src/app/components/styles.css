@@ -1,0 +1,111 @@
+/* In globals.css or your main stylesheet */
+
+html,
+body,
+#__next {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* styles for ERS technology */
+.signal-container {
+  position: relative;
+  width: 4px;
+  height: 200px;
+  background: transparent;
+  overflow: hidden;
+  
+}
+
+.signal-wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 20px;
+  background: cyan;
+  border-radius: 2px;
+  opacity: 0;
+  animation: emit-signal 1.2s linear infinite;
+}
+
+.signal-wave:nth-child(2) {
+  animation-delay: 0.4s;
+}
+.signal-wave:nth-child(3) {
+  animation-delay: 0.8s;
+}
+
+@keyframes emit-signal {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(200px);
+    opacity: 0;
+  }
+}
+
+/* styles for Minerals */
+
+.animate-flyOutTL {
+  animation: flyOutTL 1s ease-out forwards;
+}
+.animate-flyOutTR {
+  animation: flyOutTR 1s ease-out forwards;
+}
+.animate-flyOutBL {
+  animation: flyOutBL 1s ease-out forwards;
+}
+.animate-flyOutBR {
+  animation: flyOutBR 1s ease-out forwards;
+}
+.animate-flyOutR {
+  animation: flyOutR 1s ease-out forwards;
+}
+
+@keyframes flyOutTL {
+  to {
+    transform: translate(-800px, -600px) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes flyOutTR {
+  to {
+    transform: translate(-800px, -280px) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes flyOutBL {
+  to {
+    transform: translate(-800px, 40px) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes flyOutBR {
+  to {
+    transform: translate(-800px, 350px) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes flyOutR {
+  to {
+    transform: translate(250px, -400px) scale(1);
+    opacity: 1;
+  }
+}
+
+
+/* Styles for river changes */
+.animate-riverToRight {
+  animation: riverToRight 2s ease-out forwards;
+}
+
+@keyframes riverToRight {
+  to {
+    transform: translate(0px, 0px) scale(1);
+    opacity: 1;
+  }
+}
