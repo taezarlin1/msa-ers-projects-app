@@ -16,9 +16,9 @@
             "name": "ERS Technology",
             "description": "Explaining about ERS technology"
         },
-        "recieveMap": {
+        "receiveMap": {
             "name": "Received Satellite Map",
-            "description": "Collection of recieved satellite images"
+            "description": "Collection of received satellite images"
         },
         "satMap": {
             "name": "MSTC Satellite Map",

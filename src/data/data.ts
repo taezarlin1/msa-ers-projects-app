@@ -42,13 +42,13 @@ export const appCategories  = [
     {
         name: "Maps",
         id: "maps",
-        image: '/images/home/recieve.gif',
+        image: '/images/home/receive.gif',
         apps: [
             {
-                id: "recieveMap",
-                url: '/recieved-map',
+                id: "receiveMap",
+                url: '/received-map',
                 // url: 'https://earth.google.com/earth/d/1wHhU9XWSD8V3CdKIHWJA2mjhj5z0IVC8?usp=sharing',
-                image: '/images/home/recieve.gif'
+                image: '/images/home/receive.gif'
             },
             {
                 id: "satMap",
