@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSTC OSIS</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.89/Build/Cesium/Cesium.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/4.0.1/satellite.min.js"></script> -->
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.87/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        @import url("https://cesium.com/downloads/cesiumjs/releases/1.89/Build/Cesium/Widgets/widgets.css");
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-size: 16px;
+        }
+        #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+
+        .search-box{
+            width: 18rem;
+            height: 2.5rem;
+            background: transparent;
+            border: 0.125rem solid #fff;
+            border-radius: 0.3rem;
+        }
+        .row{
+            display: flex;
+            align-items: center;
+            padding: 0rem 0.6rem;
+        }
+        input{
+            flex: 1;
+            height: 2.5rem;
+            background: transparent;
+            color: white;
+            border: 0;
+            outline: 0;
+            font-size: 0.9rem;
+        }
+        button{
+            background: transparent;
+            color: white;
+            border: 0;
+            outline: 0;
+        }
+        button .fa-search{
+            width: 1.25rem;
+            cursor: pointer;
+        }
+        .result-box{
+            max-height: 18rem;
+            overflow-y: scroll;
+            background: transparent;
+            color: white;
+            
+        }
+        .result-box ul{
+            border-top: 0.06rem solid #999;
+            padding: 15px 10px;
+            z-index: 1000;
+        }
+        .result-box ul li{
+            list-style: none;
+            border-radius: 0.18rem;
+            padding: 0.9rem 0.6rem;
+            cursor: pointer;
+        }
+        .result-box ul li:hover{
+            background-color: #c5c7ca;
+        }
+
+        .popup {
+            position: fixed;
+            top: 40%;
+            left: 5%;
+            width: 18rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.6rem;
+            border-radius: 0.3rem;
+            display: none;
+            z-index: 100;
+        }
+        .popup .close-btn {
+            position: absolute;
+            top: 0.3rem;
+            right: 0.6rem;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+        }
+        #legend {
+            position: fixed;
+            bottom: 5%;
+            left: 50%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.3rem;
+            border-radius: 0.3rem;
+            z-index: 100;
+            font-size: 1.5rem;
+            display: flex;
+            gap: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.3rem;
+            font-size: 0.7em;
+        }
+        .legend-color {
+            width: 0.43rem;
+            height: 0.43rem;
+            margin-right: 0.3rem;
+            border: 0.06rem solid white;
+        }
+
+        /* Styles for mobile landscape */
+        @media (max-width: 768px) {
+            #logContainer {
+                width: 80%;
+                max-height: 30%;
+                bottom: 0.3rem;
+                right: 0.6rem;
+            }
+
+            #title {
+                font-size: small;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+    <div id="popup" class="popup">
+        <div class="close-btn" onclick="hidePopup()">×</div>
+        <div id="popup-content"></div>
+    </div>
+    
+    <div id="title" style="position: absolute; width: 100%; text-align: center; left: 50%; transform: translateX(-50%); color: rgb(37, 35, 189); font-size:x-large; text-shadow: 
+                -1px -1px 0 #fff,  
+                 1px -1px 0 #fff,
+                -1px  1px 0 #fff,
+                 1px  1px 0 #fff; 
+                "
+    >
+        <!-- <h1>MSA Outer Space Intelligence System</h1> -->
+    </div>
+    <div style="position: absolute; display: flex; flex-direction: column; gap: 0.5rem; width: 18rem; top: 16%; right: 1%; color: white;">
+        <div id="timeBox" style=" align-content: center; font-size: x-large;"></div>
+        <div style=" align-content: center; font-size: large;">
+            <a href="https://osisdashboard.ersmm.org/dashboards" >OSIS Dashboard</a>
+            <a href="https://osis.ersmm.org/track" >Track Satellites</a>
+        </div>
+        <div class="search-box">
+            <div class="row">
+                <input type="text" id="input-box" placeholder="Search Here" autocomplete="off">
+                <!-- <button><i class="fa fa-search"></i></button> -->
+            </div>
+            <div class="result-box">
+            </div>
+        </div>
+        <div style="margin-top: 10rem; background: rgba(0, 0, 0, 0.5); padding: 0.6rem; width: 16rem; z-index: 1;">
+            <div id="infoBox" style="font-size: larger;">0 objects are passing</div>
+            <div id="logContainer" style="width: 100%; height:15rem; overflow-y: auto; cursor: pointer; margin-top: 10px;">
+                <div id="logContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    
+    
+    <div id="emptyContainer" style="display: none;"></div>
+    <div id="legend">
+        <div class="legend-item"><div class="legend-color" style="background-color: #ff66ff;"></div>Inactive Satellite</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: orange;"></div>Active Satellite</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #b3ffb3;"></div>Rocket Body</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: red;"></div>Unknown</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: cyan;"></div>Cubesat</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: gray;"></div>Debris</div>
+   
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.js"></script>
+    <script>
+
+        // Grant CesiumJS access to your ion assets
+        const ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxODJiMjc2MC0zNDRiLTQ5NTctOTNmMy05NmU1ZTJhZjAwZTAiLCJpZCI6MjA2MzE5LCJpYXQiOjE3MTIxMzgyODV9.piuZGhRl8sWl3kLTl3U6KMOkAvrrsxexsNtO9t_7Ybc";
+        Cesium.Ion.defaultAccessToken = ACCESS_TOKEN;
+
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+            skyAtmosphere: new Cesium.SkyAtmosphere(),
+            sceneModePicker: false,
+            baseLayerPicker: false,
+            navigationHelpButton: false, 
+            geocoder: false,
+            timeline: false,
+            creditContainer: 'emptyContainer',
+            infoBox: false,
+            homeButton: false,
+            animation: false
+        });
+
+        viewer.useBrowserRecommendedResolution = true;  // set false and set viewr.resolutionScale to use high resolution
+        // viewer.resolutionScale = 2;
+        viewer.scene.globe.enableLighting = true;
+
+        let data = [];
+
+        const resultBox = document.querySelector(".result-box");
+        const inputBox = document.getElementById("input-box")
+
+        inputBox.onkeyup = function(){
+            let result = [];
+            let input = inputBox.value;
+            if(input.length){
+                result = data.filter((satellite)=>{
+                    return (satellite.object.toLowerCase().includes(input.toLowerCase()) || satellite.NORAD_ID.includes(input));
+                });
+            }
+            display(result);
+
+            if (!result.length){
+                resultBox.innerHTML = '';
+            }
+        }
+
+        function display(result){
+            const content = result.map((satellite)=>{
+                return "<li onClick=selectInput(this)>"+ satellite.NORAD_ID + ", " + satellite.object + "</li>";
+            });
+
+            resultBox.innerHTML = "<ul>" + content.join('') + "</ul>"
+        }
+
+        function selectInput(list){
+            inputBox.value = list.innerHTML;
+            const norad_id = inputBox.value.slice(0,inputBox.value.indexOf(','));
+            highlightEntity(norad_id);
+            resultBox.innerHTML = '';
+        }
+
+
+        // Define the region coordinates
+        // const regionCoordinates = {
+        //    top: 28.25114,
+        //    bottom: 10.858605,
+        //    right: 101.10518,
+        //    left: 92.135742
+        //};
+        const regionCoordinates = {
+            top: 28.549003,
+            bottom: 9.493509,
+            right: 101.171980,
+            left: 92.171774
+        };
+
+        const logEntries = new Map();
+        let logOrder = [];
+        const loggedObjects = new Set();
+
+        function updateLog() {
+            const logContent = document.getElementById('logContent');
+            const infoBox = document.getElementById('infoBox');
+            const timeBox = document.getElementById('timeBox');
+            const now = new Date();
+            const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            const dateTime = `${date} ${time}`;
+            timeBox.innerText = `${dateTime}`
+
+
+            // Throttle the updates to avoid excessive DOM manipulation
+            if (logOrder.length !== logContent.children.length) {
+                infoBox.innerHTML = `${logOrder.length} objects are passing`;
+
+                logContent.innerHTML = ''; // Clear existing content
+
+                // Create log entries in sorted order with numbering
+                logOrder.forEach((noradId, index) => {
+                    const obj = logEntries.get(noradId);
+                    if (obj) {
+                        const entry = document.createElement('div');
+                        entry.id = `log-entry-${noradId}`;
+                        entry.innerHTML = `<strong>${index + 1}. Name:</strong> ${obj.object} <br>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;<strong>NORAD_ID:</strong> ${obj.NORAD_ID}<br>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;<strong>Category:</strong> ${obj.category}<br>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;<strong>Altitude:</strong> ${(obj.altitude/1000).toFixed(2)} km<br>
+                                        <br>`;
+                        entry.addEventListener('click', () => highlightEntity(noradId));
+                        logContent.appendChild(entry);
+                    }
+                });
+            }
+            
+        }
+
+        let activeLabel = null;
+        let activeEntity = null;
+
+        function highlightEntity(noradId) {
+            if (activeLabel) {
+                viewer.entities.remove(activeLabel);
+            }
+            const entity = satelliteEntities[noradId];
+            if (entity) {
+
+                viewer.flyTo(entity, {
+                    offset: new Cesium.HeadingPitchRange(
+                    Cesium.Math.toRadians(0), // Heading (rotation angle around the entity)
+                    Cesium.Math.toRadians(-90), // Pitch (angle from the horizon, negative values look down)
+                    5000000 // Range (distance from the entity, in meters)
+                    ),
+                });
+                // Show a label with the object's type
+                activeLabel = viewer.entities.add({
+                    position: new Cesium.CallbackProperty(() => {
+                        return entity.position.getValue(Cesium.JulianDate.now());
+                    }, false),
+                    label: {
+                        text: `${entity.properties.name.getValue()}\n${entity.properties.category.getValue()}`,
+                        font: '14pt monospace',
+                        fillColor: Cesium.Color.YELLOW,
+                        outlineColor: Cesium.Color.BLACK,
+                        outlineWidth: 2,
+                        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                        pixelOffset: new Cesium.Cartesian2(0, -9)
+                    }
+                });
+
+                // Remove the label after 5 seconds
+                setTimeout(() => {
+                    viewer.entities.remove(activeLabel);
+                    activeLabel = null;
+                }, 5000);
+            }
+        }
+
+
+        // Specify the location (latitude, longitude) and label
+        const h_location = {
+            latitude: 16.786352,
+            longitude: 96.1591821,
+            label: 'MSTC' 
+        };
+
+        // Add a marker to the specified location
+        const markerEntity = viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(h_location.longitude, h_location.latitude, 0),
+            point: {
+                pixelSize: 9,
+                color: Cesium.Color.RED,
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 2
+            },
+            label: {
+                text: h_location.label,
+                font: '12pt sans-serif',
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                outlineWidth: 2,
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                pixelOffset: new Cesium.Cartesian2(0, -12),
+                fillColor: Cesium.Color.WHITE,
+                outlineColor: Cesium.Color.BLACK,
+                show: true
+            }
+        });
+
+        // Fly to the marker location
+        // viewer.flyTo(markerEntity);
+
+        // Fetch the GeoJSON file and add it to the Cesium viewer
+        fetch('https://osis.ersmm.org/myanmar-shape') 
+            .then(response => response.json())
+            .then(geojson => {
+                const geoJsonDataSource = new Cesium.GeoJsonDataSource();
+                return geoJsonDataSource.load(geojson, {
+                    clampToGround: true,
+                    strokeWidth: 3, // Change line width
+                });
+            })
+            .then(dataSource => {
+                viewer.dataSources.add(dataSource);
+                viewer.flyTo(dataSource, {
+                    offset: new Cesium.HeadingPitchRange(
+                    Cesium.Math.toRadians(0), // Heading (rotation angle around the entity)
+                    Cesium.Math.toRadians(-90), // Pitch (angle from the horizon, negative values look down)
+                    5000000 // Range (distance from the entity, in meters)
+                    ),
+                });
+            })
+            .catch(error => {
+                console.error('Error loading GeoJSON:', error);
+            });
+
+
+        let satelliteEntities = {}; // Store entities using NORAD_ID as the key
+
+        // Function to fetch object positions and update markers
+        async function fetchObjectData() {
+            try {
+                const response = await fetch('/api/space-objects');
+                data = await response.json();
+                console.log(data.length);
+                data.forEach(obj => {
+                    const noradId = obj.NORAD_ID.toString();
+                    if (!satelliteEntities[noradId]) {
+                        const satrec = satellite.twoline2satrec(obj.TLE_LINE1, obj.TLE_LINE2)
+
+                        const positionCallback = new Cesium.CallbackProperty(()=>{
+                            const now = new Date(Date.now()); // still local
+                            const utcNow = new Date(now.toISOString()); // ensures UTC
+                            const positionAndVelocity = satellite.propagate(satrec, utcNow);
+                            const positionEci = positionAndVelocity.position;
+                            if (!positionEci) return Cesium.Cartesian3.ZERO;
+                    
+                            const gmst = satellite.gstime(now);
+                            const positionGd = satellite.eciToGeodetic(positionEci, gmst);
+                            const latitude = satellite.radiansToDegrees(positionGd.latitude);
+                            const longitude = satellite.radiansToDegrees(positionGd.longitude);
+                            const altitude = positionGd.height * 1000; // Convert to meters
+
+                            const isWithinRegion = latitude < regionCoordinates.top && latitude > regionCoordinates.bottom && longitude < regionCoordinates.right && longitude > regionCoordinates.left;
+
+                            if (isWithinRegion) {
+                                if (!loggedObjects.has(noradId)) {
+                                    // Log the entry if it hasn't been logged before
+                                    logEntries.set(noradId, { ...obj, latitude, longitude, altitude });
+                                    logOrder.push(noradId);
+                                    loggedObjects.add(noradId);
+
+                                    // Optional: Sort logOrder if needed
+                                    logOrder.sort((a, b) => a - b);  // Or use custom sorting logic
+
+                                }
+                                
+                            } else {
+                                // If the object is no longer in the region, remove it from the log
+                                if (loggedObjects.has(noradId)) {
+                                    logEntries.delete(noradId);  // Correct removal from Map
+                                    const index = logOrder.indexOf(noradId);
+                                    if (index !== -1) logOrder.splice(index, 1);  // Remove from logOrder
+                                    loggedObjects.delete(noradId);
+                                } 
+                            }
+
+                            return Cesium.Cartesian3.fromDegrees(longitude, latitude, altitude);
+
+                        }, false);
+
+
+                        satelliteEntities[noradId] = viewer.entities.add({
+                            position: positionCallback,
+                            point: {
+                                pixelSize: 3,
+                                color: getCategoryColor(obj.category),
+                            },
+                            label: {
+                                text: obj.object,
+                                font: "14pt sans-serif",
+                                show: false,
+                                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                                outlineWidth: 2,
+                                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                                pixelOffset: new Cesium.Cartesian2(0, -12),
+                                fillColor: Cesium.Color.WHITE,
+                                outlineColor: Cesium.Color.BLACK,
+                            },
+                            properties: {
+                                name: obj.object,
+                                NORAD_ID: obj.NORAD_ID,
+                                category: obj.category,
+                                country: obj.country,
+                                rcs_size: obj.rcs_size,
+                                launch_date: obj.launch_date,
+                                launch_site: obj.launch_site,
+                                tle_line1: obj.TLE_LINE1,
+                                tle_line2: obj.TLE_LINE2
+                            }
+                        });
+                    }
+                });
+
+                
+            } catch (error) {
+                console.error("Error fetching satellite data:", error);
+            }
+        }
+
+
+        // Function to get color based on category
+        function getCategoryColor(category) {
+            switch (category) {
+                case 'DEBRIS': return Cesium.Color.GRAY;
+                case 'ROCKET BODY': return Cesium.Color.fromBytes(179, 255, 179);
+                case 'UNKNOWN': return Cesium.Color.RED;
+                case 'CUBESAT': return Cesium.Color.CYAN;
+                case 'ACTIVE SATELLITE': return Cesium.Color.ORANGE;
+                case 'INACTIVE SATELLITE': return Cesium.Color.fromBytes(255, 128, 255);
+                default: return Cesium.Color.WHITE;
+            }
+        }
+
+        let selectedEntity = null;
+        let popupUpdateInterval = null;
+        let satellitePathEntity;
+
+        function showPopup(entity) {
+            selectedEntity = entity;
+            updatePopupContent(); // Initial update
+
+            const popup = document.getElementById('popup');
+            popup.style.display = 'block';
+
+            // Clear any existing interval
+            if (popupUpdateInterval) {
+                clearInterval(popupUpdateInterval);
+            }
+
+            if (selectedEntity || selectedEntity.properties){
+                const tleLine1 = selectedEntity.properties.tle_line1.getValue();
+                const tleLine2 = selectedEntity.properties.tle_line2.getValue();
+                const satrec = satellite.twoline2satrec(tleLine1, tleLine2);
+                const meanMotion = satrec.no * 1440 / (2 * Math.PI); // Mean motion in orbits per day
+                const orbitalPeriod = (1 / meanMotion * 60 * 60 * 24  ) * 0.5; // Orbital period in seconds
+                const timeStep = 5;
+                const now = new Date();
+                const satellitePath = [];
+                for (let i = -3600; i <= orbitalPeriod; i += timeStep){
+                const calculateTime = new Date(now.getTime() + i * 1000);
+                const positionAndVelocity = satellite.propagate(satrec, calculateTime);
+                const positionEci = positionAndVelocity.position;
+                const gmst = satellite.gstime(calculateTime);
+                const positionGd = satellite.eciToGeodetic(positionEci, gmst);
+            
+                const latitude = satellite.radiansToDegrees(positionGd.latitude);
+                const longitude = satellite.radiansToDegrees(positionGd.longitude);
+                const height = positionGd.height * 1000; // in meters
+
+                satellitePath.push({ latitude, longitude, height , time: calculateTime});
+                }
+
+                const positions = satellitePath.map(p=> Cesium.Cartesian3.fromDegrees(p.longitude, p.latitude, p.height));
+
+                viewer.entities.remove(satellitePathEntity);
+                // Add the polyline to the viewer
+                satellitePathEntity = viewer.entities.add({
+                polyline: {
+                    positions: positions,
+                    width: 1,
+                    material: Cesium.Color.YELLOW
+                }
+            });
+            }
+
+            // Set an interval to update the popup content every second
+            popupUpdateInterval = setInterval(updatePopupContent, 1000);
+        }
+
+        // Function to show the popup with satellite information
+        function updatePopupContent() {
+            if (!selectedEntity || !selectedEntity.position) {
+                return;
+            }
+            const cartesianPosition = selectedEntity.position.getValue(Cesium.JulianDate.now());
+            const cartographicPosition = Cesium.Cartographic.fromCartesian(cartesianPosition);
+            const satelliteInfo = {
+                name: selectedEntity.properties.name.getValue(),
+                NORAD_ID: selectedEntity.properties.NORAD_ID.getValue(),
+                category: selectedEntity.properties.category.getValue(),
+                latitude: Cesium.Math.toDegrees(cartographicPosition.latitude),
+                longitude: Cesium.Math.toDegrees(cartographicPosition.longitude),
+                altitude: cartographicPosition.height / 1000, // altitude in km
+                country: selectedEntity.properties.country.getValue(),
+                rcs_size: selectedEntity.properties.rcs_size.getValue(),
+                launch_date: selectedEntity.properties.launch_date.getValue(),
+                launch_site: selectedEntity.properties.launch_site.getValue()
+            };
+
+
+            const popupContent = document.getElementById('popup-content');
+            popupContent.innerHTML = `
+                <table>
+                    <tr><td><h2>${satelliteInfo.name}</h2></td></tr>
+                    <tr><td></td></tr>
+                    <tr><td>NORAD_ID:</td><td>${satelliteInfo.NORAD_ID}</td></tr>
+                    <tr><td>Category:</td><td>${satelliteInfo.category}</td></tr>
+                    <tr><td>Latitude:</td><td>${satelliteInfo.latitude.toFixed(6)}</td></tr>
+                    <tr><td>Longitude:</td><td>${satelliteInfo.longitude.toFixed(6)}</td></tr>
+                    <tr><td>Altitude:</td><td>${satelliteInfo.altitude.toFixed(2)} km</td></tr>
+                    <tr><td>Country:</td><td>${satelliteInfo.country}</td></tr>
+                    <tr><td>RCS Size:</td><td>${satelliteInfo.rcs_size}</td></tr>
+                    <tr><td>Launch Date:</td><td>${satelliteInfo.launch_date}</td></tr>
+                    <tr><td>Launch Site:</td><td>${satelliteInfo.launch_site}</td></tr>
+                </table>
+            `;
+        }
+
+        // Function to hide the popup
+        function hidePopup() {
+            document.getElementById('popup').style.display = 'none';
+
+            // Clear the interval when the popup is hidden
+            if (popupUpdateInterval) {
+                clearInterval(popupUpdateInterval);
+                popupUpdateInterval = null;
+            }
+
+            viewer.entities.remove(satellitePathEntity);
+            selectedEntity = null;
+        }
+
+        // Create a screen space event handler
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+        // Add a left-click event handler
+        handler.setInputAction(function (movement) {
+            const pickedObject = viewer.scene.pick(movement.position);
+            if (Cesium.defined(pickedObject) && Cesium.defined(pickedObject.id)) {
+                showPopup(pickedObject.id);
+            } 
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+
+        // Initial data fetch and position update
+        fetchObjectData().then(() => {
+            updateLog();
+            setInterval(updateLog, 1000);
+        });
+
+    </script>
+</body>
+</body>
+</html>
