@@ -81,12 +81,12 @@ function SideBySideLayer({ leftYear, rightYear, state }: { leftYear: string, rig
   return (
     <>
       <TileLayer
-        url={`${BASE_URL}:3001/api/maptiles/forest/${state}_${leftYear}/{z}/{x}/{y}.png`}
+        url={`${BASE_URL}:3001/api/maptiles/forest/${state}/${state}_${leftYear}/{z}/{x}/{y}.png`}
         maxZoom={20}
         ref={(ref) => { leftLayerRef.current = ref; }}
       />
       <TileLayer
-        url={`${BASE_URL}:3001/api/maptiles/forest/${state}_${rightYear}/{z}/{x}/{y}.png`}
+        url={`${BASE_URL}:3001/api/maptiles/forest/${state}/${state}_${rightYear}/{z}/{x}/{y}.png`}
         maxZoom={20}
         ref={(ref) => { rightLayerRef.current = ref; }}
       />

@@ -408,7 +408,7 @@
         // Function to fetch object positions and update markers
         async function fetchObjectData() {
             try {
-                const response = await fetch('/api/space-objects');
+                const response = await fetch('https://osis.ersmm.org/objects-position');
                 data = await response.json();
                 console.log(data.length);
                 data.forEach(obj => {
